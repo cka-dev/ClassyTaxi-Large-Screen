@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,14 +76,13 @@ fun OneTimeProductScreens(
             currentOneTimeProduct = (otpUIState as OneTimeProductUiState.Success)
                 .currentOneTimeProductPurchase
             otpContent = (otpUIState as OneTimeProductUiState.Success).content?.url?.let {
-                ContentResource(it) }
+                ContentResource(it)
+            }
         }
         is OneTimeProductUiState.Error -> {
             // Show an error message, or handle the error state appropriately
         }
-
         null -> TODO()
-        else -> TODO()
     }
 
 
@@ -107,7 +107,7 @@ fun OneTimeProductScreens(
             .OTP -> {
             if (otpContent?.url != null) {
                 OneTimeProductConsumptionScreen(
-                    otpContent = otpContent!!,
+                    otpContent = otpContent,
                     onRefresh = {
                         oneTimeProductPurchaseStatusViewModel.manualRefresh()
                     },
@@ -180,7 +180,7 @@ fun OneTimeProductConsumptionScreen(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val consumeCount = remember { mutableStateOf(0) }
+    val consumeCount = remember { mutableIntStateOf(0) }
     val maxConsumeCount = 1
 
     Card(
@@ -202,7 +202,7 @@ fun OneTimeProductConsumptionScreen(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        consumeCount.value += 1
+                        consumeCount.intValue += 1
                         kotlin.runCatching {
                             currentOneTimeProducts.collect { otp ->
                                 otp.forEach { purchase ->
@@ -226,7 +226,7 @@ fun OneTimeProductConsumptionScreen(
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth(),
-                enabled = consumeCount.value < maxConsumeCount
+                enabled = consumeCount.intValue < maxConsumeCount
             ) {
                 Text(text = stringResource(id = R.string.consume_one_time_product_button_text))
             }

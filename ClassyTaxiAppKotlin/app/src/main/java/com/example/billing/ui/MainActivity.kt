@@ -54,7 +54,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var oneTimePurchaseViewModel: OneTimeProductPurchaseStatusViewModel
 
 
-
     private val authenticationViewModel: FirebaseUserViewModel by viewModels()
     private lateinit var registerResult: ActivityResultLauncher<Intent>
 
@@ -62,8 +61,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val billingRepository = (application as BillingApp).repository
-
-
 
         oneTimePurchaseViewModel = ViewModelProvider(
             this,
@@ -130,10 +127,16 @@ class MainActivity : AppCompatActivity() {
         // Update purchases information when user changes.
         authenticationViewModel.userChangeEvent.observe(this) {
             Log.d(TAG, "user changed for some reason")
-            subscriptionViewModel.userChanged( repository = billingRepository)
+            subscriptionViewModel.userChanged(repository = billingRepository)
             lifecycleScope.launch {
-                registerPurchases(billingClientLifecycle.subscriptionPurchases.value, repository = billingRepository)
-                registerPurchases(billingClientLifecycle.oneTimeProductPurchases.value, repository = billingRepository)
+                registerPurchases(
+                    billingClientLifecycle.subscriptionPurchases.value,
+                    repository = billingRepository
+                )
+                registerPurchases(
+                    billingClientLifecycle.oneTimeProductPurchases.value,
+                    repository = billingRepository
+                )
             }
         }
 
@@ -153,7 +156,10 @@ class MainActivity : AppCompatActivity() {
     /**
      * Register Product purchases with the server.
      */
-    private suspend fun registerPurchases(purchaseList: List<Purchase>, repository: BillingRepository) {
+    private suspend fun registerPurchases(
+        purchaseList: List<Purchase>,
+        repository: BillingRepository
+    ) {
         billingViewModel.registerPurchases(purchaseList, repository = repository)
     }
 

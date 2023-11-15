@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,7 +38,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.billing.Constants
 import com.example.billing.R
 import com.example.billing.data.ContentResource
-import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.SubscriptionStatusViewModel
 import com.example.billing.ui.composable.ClassyTaxiImage
 import com.example.billing.ui.composable.ClassyTaxiScreenHeader
@@ -55,13 +55,13 @@ fun BasicTabScreens(
     modifier: Modifier = Modifier,
 ) {
     val selectedBasicConversionButton =
-        remember { mutableStateOf(SelectedSubscriptionBasePlan.NONE.index) }
+        remember { mutableIntStateOf(SelectedSubscriptionBasePlan.NONE.index) }
 
     val selectedEntitlementButtonMonthly =
-        remember { mutableStateOf(SelectedSubscriptionBasePlan.NONE.index) }
+        remember { mutableIntStateOf(SelectedSubscriptionBasePlan.NONE.index) }
 
     val selectedEntitlementButtonPrepaid =
-        remember { mutableStateOf(SelectedSubscriptionBasePlan.NONE.index) }
+        remember { mutableIntStateOf(SelectedSubscriptionBasePlan.NONE.index) }
 
     when (currentSubscription) {
         SubscriptionStatusViewModel.CurrentSubscription.BASIC_PREPAID -> {

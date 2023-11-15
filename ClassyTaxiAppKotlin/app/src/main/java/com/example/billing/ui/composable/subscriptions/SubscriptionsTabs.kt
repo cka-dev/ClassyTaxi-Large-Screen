@@ -18,7 +18,6 @@
 package com.example.billing.ui.composable.subscriptions
 
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -27,11 +26,8 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.billing.R
-import com.example.billing.data.ContentResource
 import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.SubscriptionStatusViewModel
 import com.example.billing.ui.SubscriptionUIState
@@ -67,9 +62,12 @@ fun SubscriptionsScreen(
     onOpenSubscriptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when(state) {
-        is SubscriptionUIState.Success -> SuccessScreen(state, onBuyBasePlans = onBuyBasePlans,
-            onOpenSubscriptions = onOpenSubscriptions)
+    when (state) {
+        is SubscriptionUIState.Success -> SuccessScreen(
+            state, onBuyBasePlans = onBuyBasePlans,
+            onOpenSubscriptions = onOpenSubscriptions
+        )
+
         is SubscriptionUIState.Error -> ErrorScreen()
         is SubscriptionUIState.Loading -> LoadingScreen()
     }

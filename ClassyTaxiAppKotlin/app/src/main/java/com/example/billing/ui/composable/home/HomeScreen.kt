@@ -135,6 +135,7 @@ private fun MainNavigation(
     billingViewModel: BillingViewModel,
     subscriptionStatusViewModel: SubscriptionStatusViewModel,
     oneTimeProductPurchaseStatusViewModel: OneTimeProductPurchaseStatusViewModel,
+    modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
 

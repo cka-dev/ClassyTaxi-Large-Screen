@@ -23,9 +23,9 @@ import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.android.billingclient.api.Purchase
+import com.example.billing.BillingApp
 import com.example.billing.Constants
 import com.example.billing.R
-import com.example.billing.BillingApp
 import com.example.billing.data.BillingRepository
 import com.example.billing.gpbl.BillingClientLifecycle
 import com.firebase.ui.auth.AuthUI
@@ -163,6 +163,7 @@ class TvMainActivity(private val repository: BillingRepository) : FragmentActivi
                     Log.d(TAG, "Sign-in FAILED!")
                 }
             }
+
             else -> {
                 Log.e(TAG, "Unrecognized request code: $requestCode")
             }

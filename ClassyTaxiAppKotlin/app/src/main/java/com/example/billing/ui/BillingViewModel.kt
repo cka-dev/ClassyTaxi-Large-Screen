@@ -16,15 +16,12 @@
 
 package com.example.billing.ui
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
-import com.example.billing.BillingApp
-import androidx.lifecycle.viewModelScope
 import com.example.billing.Constants
 import com.example.billing.data.BillingRepository
 import com.example.billing.data.otps.OneTimeProductPurchaseStatus
@@ -36,8 +33,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 
-class BillingViewModel(private val repository: BillingRepository,
-    billingClientLifecycle: BillingClientLifecycle) : ViewModel() {
+class BillingViewModel(
+    private val repository: BillingRepository,
+    billingClientLifecycle: BillingClientLifecycle
+) : ViewModel() {
 
     /**
      * Local billing purchase data.

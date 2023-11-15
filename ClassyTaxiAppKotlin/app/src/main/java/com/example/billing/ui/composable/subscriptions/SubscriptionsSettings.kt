@@ -36,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.example.billing.R
-import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.composable.ClassyTaxiScreenHeader
 import com.example.billing.ui.composable.resetSelectedButton
 

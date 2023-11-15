@@ -16,15 +16,11 @@
 
 package com.example.billing.ui
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.billing.BillingApp
 import com.example.billing.data.BillingRepository
 import com.example.billing.data.ContentResource
-import com.example.billing.data.subscriptions.SubscriptionStatus
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -99,7 +94,7 @@ class SubscriptionStatusViewModel(
             }
         }
 
-        if (content== null && current != CurrentSubscription.NONE) {
+        if (content == null && current != CurrentSubscription.NONE) {
             SubscriptionUIState.Loading
         } else {
             SubscriptionUIState.Success(content, current)
@@ -222,6 +217,7 @@ class SubscriptionStatusViewModel(
             t2.third,
         )
     }
+
     companion object {
         private const val TAG = "SubViewModel"
     }

@@ -17,11 +17,8 @@
 
 package com.example.billing.ui
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.billing.BillingApp
 import com.example.billing.data.BillingRepository
 import com.example.billing.data.ContentResource
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +27,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -39,23 +35,23 @@ import kotlinx.coroutines.launch
 sealed interface OneTimeProductUiState {
     data class Error(
         val message: String
-    ): OneTimeProductUiState
+    ) : OneTimeProductUiState
 
     data class Success(
         val currentOneTimeProductPurchase:
         OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase,
         val content: ContentResource?,
         val message: String
-    ):OneTimeProductUiState
+    ) : OneTimeProductUiState
 }
-class OneTimeProductPurchaseStatusViewModel(repository: BillingRepository, ) : ViewModel()
-{
+
+class OneTimeProductPurchaseStatusViewModel(repository: BillingRepository) : ViewModel() {
 
     private val userCurrentOneTimeProduct = repository.hasOneTimeProduct
 
     private val currentOneTimeProductPurchase: Flow<CurrentOneTimeProductPurchase?> =
         userCurrentOneTimeProduct.map { hasCurrentOneTimeProduct ->
-            if(hasCurrentOneTimeProduct) {
+            if (hasCurrentOneTimeProduct) {
                 CurrentOneTimeProductPurchase.OTP
             } else {
                 CurrentOneTimeProductPurchase.NONE
@@ -66,7 +62,7 @@ class OneTimeProductPurchaseStatusViewModel(repository: BillingRepository, ) : V
         currentOneTimeProductPurchase,
         repository.otpContent
     ) { currentPurchase, content ->
-        if(currentPurchase == null) {
+        if (currentPurchase == null) {
             OneTimeProductUiState.Error("No one-time product purchase found.")
         } else {
             OneTimeProductUiState.Success(
@@ -75,8 +71,10 @@ class OneTimeProductPurchaseStatusViewModel(repository: BillingRepository, ) : V
                 message = "Success"
             )
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        null)
+    }.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        null
+    )
 
     // TODO show status in UI
     private val _errorMessage = MutableStateFlow<String?>(null)

@@ -18,27 +18,26 @@ package com.example.billing
 
 object Constants {
 
-        // Use the fake local server data or real remote server.
-        @Volatile
-        var USE_FAKE_SERVER = false
+    // Use the fake local server data or real remote server.
+    @Volatile
+    var USE_FAKE_SERVER = false
 
-        //Product IDs
-        const val BASIC_PRODUCT = "basic_subscription"
-        const val PREMIUM_PRODUCT = "premium_subscription"
-        const val ONE_TIME_PRODUCT = "otp"
+    //Product IDs
+    const val BASIC_PRODUCT = "basic_subscription"
+    const val PREMIUM_PRODUCT = "premium_subscription"
+    const val ONE_TIME_PRODUCT = "otp"
 
-        //Tags
-        const val BASIC_MONTHLY_PLAN_TAG = "basicmonthly"
-        const val BASIC_YEARLY_PLAN_TAG = "basicyearly"
-        const val PREMIUM_MONTHLY_PLAN_TAG = "premiummonthly"
-        const val PREMIUM_YEARLY_PLAN_TAG = "premiumyearly"
-        const val BASIC_PREPAID_PLAN_TAG = "prepaidbasic"
-        const val PREMIUM_PREPAID_PLAN_TAG = "prepaidpremium"
+    //Tags
+    const val BASIC_MONTHLY_PLAN_TAG = "basicmonthly"
+    const val BASIC_YEARLY_PLAN_TAG = "basicyearly"
+    const val PREMIUM_MONTHLY_PLAN_TAG = "premiummonthly"
+    const val PREMIUM_YEARLY_PLAN_TAG = "premiumyearly"
+    const val BASIC_PREPAID_PLAN_TAG = "prepaidbasic"
+    const val PREMIUM_PREPAID_PLAN_TAG = "prepaidpremium"
 
 
-        const val PLAY_STORE_SUBSCRIPTION_URL
-                = "https://play.google.com/store/account/subscriptions"
-        const val PLAY_STORE_SUBSCRIPTION_DEEPLINK_URL
-                = "https://play.google.com/store/account/subscriptions?product=%s&package=%s"
+    const val PLAY_STORE_SUBSCRIPTION_URL = "https://play.google.com/store/account/subscriptions"
+    const val PLAY_STORE_SUBSCRIPTION_DEEPLINK_URL =
+        "https://play.google.com/store/account/subscriptions?product=%s&package=%s"
 
 }
