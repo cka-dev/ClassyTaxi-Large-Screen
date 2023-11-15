@@ -17,7 +17,6 @@
 
 package com.example.billing.ui.composable.home
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -57,12 +56,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.billing.R
+import com.example.billing.data.BillingRepository
 import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.FirebaseUserViewModel
 import com.example.billing.ui.OneTimeProductPurchaseStatusViewModel
 import com.example.billing.ui.SubscriptionStatusViewModel
 import com.example.billing.ui.composable.otps.OneTimeProductScreens
-import com.example.billing.ui.composable.subscriptions.SubscriptionScreen
+import com.example.billing.ui.composable.subscriptions.SubscriptionRoute
 import com.example.billing.ui.theme.ClassyTaxiAppKotlinTheme
 import com.firebase.ui.auth.AuthUI
 import kotlinx.coroutines.launch
@@ -74,6 +74,7 @@ fun ClassyTaxiApp(
     subscriptionViewModel: SubscriptionStatusViewModel,
     oneTimeProductViewModel: OneTimeProductPurchaseStatusViewModel,
     authenticationViewModel: FirebaseUserViewModel,
+    repository: BillingRepository,
     modifier: Modifier = Modifier,
 ) {
     ClassyTaxiAppKotlinTheme {
@@ -91,10 +92,10 @@ fun ClassyTaxiApp(
                             DrawerMenuContent(
                                 onRefresh = {
                                     oneTimeProductViewModel.manualRefresh()
-                                    subscriptionViewModel.manualRefresh()
+                                    subscriptionViewModel.manualRefresh(repository = repository)
                                 },
                                 onSignOut = {
-                                    subscriptionViewModel.unregisterInstanceId()
+                                    subscriptionViewModel.unregisterInstanceId(repository = repository)
                                     AuthUI.getInstance().signOut(context).addOnCompleteListener {
                                         authenticationViewModel.updateFirebaseUser()
                                     }
@@ -133,7 +134,7 @@ fun ClassyTaxiApp(
 private fun MainNavigation(
     billingViewModel: BillingViewModel,
     subscriptionStatusViewModel: SubscriptionStatusViewModel,
-    oneTimeProductPurchaseStatusViewModel: OneTimeProductPurchaseStatusViewModel
+    oneTimeProductPurchaseStatusViewModel: OneTimeProductPurchaseStatusViewModel,
 ) {
     val navController = rememberNavController()
 
@@ -148,7 +149,7 @@ private fun MainNavigation(
             }
         }
         composable(Screen.Subscription.route) {
-            SubscriptionScreen(
+            SubscriptionRoute(
                 billingViewModel = billingViewModel,
                 subscriptionStatusViewModel = subscriptionStatusViewModel,
             )
@@ -170,6 +171,7 @@ private fun MainNavigation(
 
 @Composable
 fun ClassyTaxiTopBar(
+    modifier: Modifier = Modifier,
     onMenuButtonClick: () -> Unit,
 ) {
     Surface(

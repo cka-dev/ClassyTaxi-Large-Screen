@@ -70,11 +70,13 @@ class BillingClientLifecycle private constructor(
     /**
      * ProductDetails for all known products.
      */
-    val premiumSubProductWithProductDetails = MutableLiveData<ProductDetails?>()
+    val premiumSubProductWithProductDetails = MutableStateFlow<ProductDetails?>(null)
 
-    val basicSubProductWithProductDetails = MutableLiveData<ProductDetails?>()
+    val basicSubProductWithProductDetails = MutableStateFlow<ProductDetails?>(null)
 
-    val oneTimeProductWithProductDetails = MutableLiveData<ProductDetails?>()
+    val oneTimeProductWithProductDetails = MutableStateFlow<ProductDetails?>(null)
+
+    val isBillingClientReady = MutableStateFlow<Boolean>(false)
 
     /**
      * Instantiate a new BillingClient instance.
@@ -113,10 +115,9 @@ class BillingClientLifecycle private constructor(
         if (responseCode == BillingClient.BillingResponseCode.OK) {
             // The billing client is ready.
             // You can query product details and purchases here.
+            isBillingClientReady.value = true
             querySubscriptionProductDetails()
             queryOneTimeProductDetails()
-            querySubscriptionPurchases()
-            queryOneTimeProductPurchases()
         }
     }
 
@@ -209,7 +210,8 @@ class BillingClientLifecycle private constructor(
                 // These response codes are not expected.
                 Log.w(
                     TAG,
-                    "onProductDetailsResponse - Unexpected error: ${response.code} $debugMessage"
+                    "onProductDetailsResponse - Unexpected error: " +
+                            "${response.code} $debugMessage"
                 )
             }
 
@@ -256,15 +258,15 @@ class BillingClientLifecycle private constructor(
             when (productDetails.productType) {
                 BillingClient.ProductType.SUBS -> {
                     if (productDetails.productId == Constants.PREMIUM_PRODUCT) {
-                        premiumSubProductWithProductDetails.postValue(productDetails)
+                        premiumSubProductWithProductDetails.value = productDetails
                     } else if (productDetails.productId == Constants.BASIC_PRODUCT) {
-                        basicSubProductWithProductDetails.postValue(productDetails)
+                        basicSubProductWithProductDetails.value = productDetails
                     }
                 }
 
                 BillingClient.ProductType.INAPP -> {
                     if (productDetails.productId == Constants.ONE_TIME_PRODUCT) {
-                        oneTimeProductWithProductDetails.postValue(productDetails)
+                        oneTimeProductWithProductDetails.value = productDetails
                     }
                 }
             }

@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.billingclient.api.Purchase
 import com.example.billing.gpbl.BillingClientLifecycle
 import com.example.billing.data.disk.BillingLocalDataSource
+import com.example.billing.data.disk.db.OneTimePurchasesDatabase
 import com.example.billing.data.disk.db.SubscriptionPurchasesDatabase
 import com.example.billing.data.network.BillingRemoteDataSource
 import com.example.billing.data.network.firebase.FakeServerFunctions
@@ -35,7 +36,8 @@ fun samplePurchase(product: String, purchaseToken: String): Purchase =
     )
 
 class BillingRepositoryTest {
-    private lateinit var database: SubscriptionPurchasesDatabase
+    private lateinit var subDatabase: SubscriptionPurchasesDatabase
+    private lateinit var otpDatabase: OneTimePurchasesDatabase
     private lateinit var serverFunctions: ServerFunctions
     private lateinit var billingLocalDataSource: BillingLocalDataSource
     private lateinit var billingRemoteDataSource: BillingRemoteDataSource
@@ -48,9 +50,10 @@ class BillingRepositoryTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
         // TODO delegate the following instantiations to Hilt
-        database = Room.inMemoryDatabaseBuilder(appContext, SubscriptionPurchasesDatabase::class.java).build()
+        subDatabase = Room.inMemoryDatabaseBuilder(appContext, SubscriptionPurchasesDatabase::class.java).build()
+        otpDatabase = Room.inMemoryDatabaseBuilder(appContext, OneTimePurchasesDatabase::class.java).build()
         serverFunctions = FakeServerFunctions.getInstance()
-        billingLocalDataSource = BillingLocalDataSource.getInstance(database.subscriptionStatusDao())
+        billingLocalDataSource = BillingLocalDataSource.getInstance(subDatabase.subscriptionStatusDao(), otpDatabase.oneTimeProductStatusDao())
         billingRemoteDataSource = BillingRemoteDataSource.getInstance(serverFunctions)
 
         billingClientLifecycle = mockk()
@@ -65,7 +68,8 @@ class BillingRepositoryTest {
     @After
     @Throws(IOException::class)
     fun tearDown() {
-        database.close()
+        subDatabase.close()
+        otpDatabase.close()
     }
 
     @Test

@@ -19,67 +19,88 @@ package com.example.billing.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.billing.BillingApp
+import com.example.billing.data.BillingRepository
+import com.example.billing.data.ContentResource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class OneTimeProductPurchaseStatusViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+sealed interface OneTimeProductUiState {
+    data class Error(
+        val message: String
+    ): OneTimeProductUiState
 
-    private val _currentOneTimeProductPurchase =
-        MutableStateFlow(CurrentOneTimeProductPurchase.NONE)
-    val currentOneTimeProductPurchase = _currentOneTimeProductPurchase.asStateFlow()
-
-    private val repository = (application as BillingApp).repository
+    data class Success(
+        val currentOneTimeProductPurchase:
+        OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase,
+        val content: ContentResource?,
+        val message: String
+    ):OneTimeProductUiState
+}
+class OneTimeProductPurchaseStatusViewModel(repository: BillingRepository, ) : ViewModel()
+{
 
     private val userCurrentOneTimeProduct = repository.hasOneTimeProduct
 
-    val content = repository.otpContent
+    private val currentOneTimeProductPurchase: Flow<CurrentOneTimeProductPurchase?> =
+        userCurrentOneTimeProduct.map { hasCurrentOneTimeProduct ->
+            if(hasCurrentOneTimeProduct) {
+                CurrentOneTimeProductPurchase.OTP
+            } else {
+                CurrentOneTimeProductPurchase.NONE
+            }
+        }
+
+    val uiState: StateFlow<OneTimeProductUiState?> = combine(
+        currentOneTimeProductPurchase,
+        repository.otpContent
+    ) { currentPurchase, content ->
+        if(currentPurchase == null) {
+            OneTimeProductUiState.Error("No one-time product purchase found.")
+        } else {
+            OneTimeProductUiState.Success(
+                currentOneTimeProductPurchase = currentPurchase,
+                content = content,
+                message = "Success"
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        null)
 
     // TODO show status in UI
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            userCurrentOneTimeProduct.collectLatest { hasCurrentOneTimeProduct ->
-                when {
-                    hasCurrentOneTimeProduct -> {
-                        _currentOneTimeProductPurchase.value = CurrentOneTimeProductPurchase.OTP
-                    }
+    private val onRefresh: MutableSharedFlow<Unit> = MutableSharedFlow()
 
-                    !hasCurrentOneTimeProduct -> {
-                        _currentOneTimeProductPurchase.value = CurrentOneTimeProductPurchase.NONE
-                    }
-                }
-            }
-        }
+    private val foobar: Flow<Result<Unit>> = onRefresh.map {
+        repository.fetchOneTimeProductPurchases()
     }
 
     /**
      * Refresh the status of one-time product purchases.
      */
     fun manualRefresh() {
-
         viewModelScope.launch {
-            repository.queryProducts()
-        }
-
-        viewModelScope.launch {
-            val result = repository.fetchOneTimeProductPurchases()
-            if (result.isFailure) {
-                _errorMessage.emit(result.exceptionOrNull()?.localizedMessage)
-            }
+            onRefresh.emit(Unit)
         }
     }
 
     enum class CurrentOneTimeProductPurchase {
         OTP,
-        NONE;
+        NONE,
+        PENDING;
     }
 
     companion object {

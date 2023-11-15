@@ -26,6 +26,7 @@ import com.android.billingclient.api.Purchase
 import com.example.billing.Constants
 import com.example.billing.R
 import com.example.billing.BillingApp
+import com.example.billing.data.BillingRepository
 import com.example.billing.gpbl.BillingClientLifecycle
 import com.firebase.ui.auth.AuthUI
 
@@ -37,7 +38,7 @@ import com.firebase.ui.auth.AuthUI
  * subscribing to the sameViewModels and providing similar business logic.
  *
  */
-class TvMainActivity : FragmentActivity() {
+class TvMainActivity(private val repository: BillingRepository) : FragmentActivity() {
 
     companion object {
         private const val TAG = "TvMainActivity"
@@ -96,7 +97,7 @@ class TvMainActivity : FragmentActivity() {
 
         // Update subscription information when user changes.
         authenticationViewModel.userChangeEvent.observe(this) {
-            subscriptionViewModel.userChanged()
+            subscriptionViewModel.userChanged(repository = repository)
             registerPurchases(billingClientLifecycle.subscriptionPurchases.value)
         }
     }
@@ -111,7 +112,8 @@ class TvMainActivity : FragmentActivity() {
             Log.d(TAG, "Register purchase with product: $product, token: $purchaseToken")
             subscriptionViewModel.registerSubscription(
                 product = product,
-                purchaseToken = purchaseToken
+                purchaseToken = purchaseToken,
+                repository = repository
             )
         }
     }
@@ -138,7 +140,7 @@ class TvMainActivity : FragmentActivity() {
      * Sign out with FirebaseUI Auth.
      */
     fun triggerSignOut() {
-        subscriptionViewModel.unregisterInstanceId()
+        subscriptionViewModel.unregisterInstanceId(repository = repository)
         AuthUI.getInstance().signOut(this).addOnCompleteListener {
             Log.d(TAG, "User SIGNED OUT!")
             authenticationViewModel.updateFirebaseUser()

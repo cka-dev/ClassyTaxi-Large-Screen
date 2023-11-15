@@ -17,6 +17,7 @@
 
 package com.example.billing.ui.composable.subscriptions
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,41 +29,64 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.billing.R
 import com.example.billing.data.ContentResource
 import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.SubscriptionStatusViewModel
+import com.example.billing.ui.SubscriptionUIState
+import com.example.billing.ui.composable.LoadingScreen
 import com.example.billing.ui.composable.SelectedSubscriptionTab
 
 @Composable
-fun SubscriptionScreen(
+fun SubscriptionRoute(
     billingViewModel: BillingViewModel,
     subscriptionStatusViewModel: SubscriptionStatusViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val (selectedTab, setSelectedTab) = remember {
-        mutableStateOf(
+    val subUIState by subscriptionStatusViewModel.state.collectAsStateWithLifecycle()
+    SubscriptionsScreen(
+        subUIState,
+        onBuyBasePlans = billingViewModel::buyBasePlans,
+        onOpenSubscriptions = billingViewModel::openPlayStoreSubscriptions,
+    )
+}
+
+@Composable
+fun SubscriptionsScreen(
+    state: SubscriptionUIState,
+    onBuyBasePlans: BuyBasePlansListener,
+    onOpenSubscriptions: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when(state) {
+        is SubscriptionUIState.Success -> SuccessScreen(state, onBuyBasePlans = onBuyBasePlans,
+            onOpenSubscriptions = onOpenSubscriptions)
+        is SubscriptionUIState.Error -> ErrorScreen()
+        is SubscriptionUIState.Loading -> LoadingScreen()
+    }
+}
+
+@Composable
+fun SuccessScreen(
+    state: SubscriptionUIState.Success,
+    onBuyBasePlans: BuyBasePlansListener,
+    onOpenSubscriptions: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (selectedTab, setSelectedTab) = rememberSaveable {
+        mutableIntStateOf(
             SelectedSubscriptionTab.BASIC.index
         )
     }
-
-    val currentSubscription by subscriptionStatusViewModel.currentSubscription.collectAsState(
-        initial = SubscriptionStatusViewModel.CurrentSubscription.NONE
-    )
-
-    val premiumContentResource by subscriptionStatusViewModel.premiumContent.collectAsState(
-        initial = ContentResource("google.com")
-    )
-
-    val basicContentResource by subscriptionStatusViewModel.basicContent.collectAsState(
-        initial = ContentResource("google.com")
-    )
 
     Surface(modifier = modifier) {
         Column(
@@ -106,22 +130,34 @@ fun SubscriptionScreen(
             }
 
             when (selectedTab) {
-                SelectedSubscriptionTab.BASIC.index -> BasicTabScreens(
-                    billingViewModel = billingViewModel,
-                    currentSubscription = currentSubscription,
-                    contentResource = basicContentResource
-                )
+                SelectedSubscriptionTab.BASIC.index -> {
+                    BasicTabScreens(
+                        onBuyBasePlans = onBuyBasePlans,
+                        currentSubscription = state.currentSubscription,
+                        contentResource = state.content,
+                    )
+                }
 
-                SelectedSubscriptionTab.PREMIUM.index -> PremiumTabScreens(
-                    billingViewModel = billingViewModel,
-                    currentSubscription = currentSubscription,
-                    contentResource = premiumContentResource
-                )
+                SelectedSubscriptionTab.PREMIUM.index -> {
+                    PremiumTabScreens(
+                        onBuyBasePlans = onBuyBasePlans,
+                        currentSubscription = state.currentSubscription,
+                        contentResource = state.content,
+                    )
+                }
 
                 SelectedSubscriptionTab.SETTINGS.index -> SubscriptionSettingsScreen(
-                    billingViewModel = billingViewModel
+                    onOpenSubscriptions = onOpenSubscriptions
                 )
             }
         }
     }
+}
+
+@Composable
+fun ErrorScreen(
+    modifier: Modifier = Modifier
+) {
+    // Show an error message, or handle the error state appropriately
+    Log.wtf("SubscriptionScreen", "SubscriptionUIState.Error")
 }

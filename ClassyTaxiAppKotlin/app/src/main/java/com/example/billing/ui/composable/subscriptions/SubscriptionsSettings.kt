@@ -42,7 +42,7 @@ import com.example.billing.ui.composable.resetSelectedButton
 
 @Composable
 fun SubscriptionSettingsScreen(
-    billingViewModel: BillingViewModel,
+    onOpenSubscriptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val selectedSettingsButton = remember { mutableStateOf(false) }
@@ -65,7 +65,7 @@ fun SubscriptionSettingsScreen(
 
     LaunchedEffect(key1 = selectedSettingsButton.value) {
         if (selectedSettingsButton.value) {
-            billingViewModel.openPlayStoreSubscriptions()
+            onOpenSubscriptions()
             resetSelectedButton(
                 selectedIntButton = null,
                 selectedBooleanButton = selectedSettingsButton

@@ -19,51 +19,53 @@ package com.example.billing.ui
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.example.billing.BillingApp
+import androidx.lifecycle.viewModelScope
 import com.example.billing.Constants
 import com.example.billing.data.BillingRepository
 import com.example.billing.data.otps.OneTimeProductPurchaseStatus
 import com.example.billing.data.subscriptions.SubscriptionStatus
+import com.example.billing.gpbl.BillingClientLifecycle
 import com.example.billing.gpbl.deviceHasGooglePlaySubscription
 import com.example.billing.gpbl.serverHasSubscription
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 
-class BillingViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository: BillingRepository = (application as BillingApp).repository
+class BillingViewModel(private val repository: BillingRepository,
+    billingClientLifecycle: BillingClientLifecycle) : ViewModel() {
 
     /**
      * Local billing purchase data.
      */
-    private val purchases = (application as BillingApp).billingClientLifecycle.subscriptionPurchases
+    private val purchases = billingClientLifecycle.subscriptionPurchases
 
     /**
      * ProductDetails for all known Products.
      */
     private val premiumSubProductWithProductDetails =
-        (application as BillingApp).billingClientLifecycle.premiumSubProductWithProductDetails
+        billingClientLifecycle.premiumSubProductWithProductDetails
 
     private val basicSubProductWithProductDetails =
-        (application as BillingApp).billingClientLifecycle.basicSubProductWithProductDetails
+        billingClientLifecycle.basicSubProductWithProductDetails
 
     private val oneTimeProductWithProductDetails =
-        (application as BillingApp).billingClientLifecycle.oneTimeProductWithProductDetails
+        billingClientLifecycle.oneTimeProductWithProductDetails
 
     /**
      * Subscriptions record according to the server.
      */
-    private val subscriptions: StateFlow<List<SubscriptionStatus>> =
-        (application as BillingApp).repository.subscriptions
+    private val subscriptions: StateFlow<List<SubscriptionStatus>> = repository.subscriptions
 
     /**
      * One-time product purchases record according to the server.
      */
     val oneTimeProductPurchases: StateFlow<List<OneTimeProductPurchaseStatus>> =
-        (application as BillingApp).repository.oneTimeProductPurchases
+        repository.oneTimeProductPurchases
 
     /**
      * Send an event when the Activity needs to buy something.
@@ -75,6 +77,17 @@ class BillingViewModel(application: Application) : AndroidViewModel(application)
      * Store for the user to manage their subscriptions.
      */
     val openPlayStoreSubscriptionsEvent = SingleLiveEvent<String>()
+
+    init {
+        viewModelScope.launch {
+            repository.isBillingClientReady.collect { billingClientStatus ->
+                if (billingClientStatus) {
+                    repository.querySubscriptions()
+                    repository.queryOneTimeProductPurchases()
+                }
+            }
+        }
+    }
 
     /**
      * Open the Play Store subscription center. If the user has exactly one product,
@@ -392,7 +405,6 @@ class BillingViewModel(application: Application) : AndroidViewModel(application)
             it.products.contains(Constants.BASIC_PRODUCT) ||
                     it.products.contains(Constants.PREMIUM_PRODUCT)
         }
-
         if (currentSubscriptionPurchaseCount > EXPECTED_SUBSCRIPTION_PURCHASE_LIST_SIZE) {
             Log.e(TAG, "There are more than one subscription purchases on the device.")
             return
@@ -425,7 +437,7 @@ class BillingViewModel(application: Application) : AndroidViewModel(application)
     }
 
 
-    suspend fun registerPurchases(purchases: List<Purchase>) {
+    suspend fun registerPurchases(purchases: List<Purchase>, repository: BillingRepository) {
         if (purchases.isEmpty()) {
             Log.e(TAG, "No purchases to register.")
         } else {

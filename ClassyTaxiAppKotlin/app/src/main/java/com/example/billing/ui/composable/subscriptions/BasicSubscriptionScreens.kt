@@ -45,11 +45,13 @@ import com.example.billing.ui.composable.LoadingScreen
 import com.example.billing.ui.composable.SelectedSubscriptionBasePlan
 import com.example.billing.ui.composable.resetSelectedButton
 
+typealias BuyBasePlansListener = (product: String, tag: String, upDowngrade: Boolean) -> Unit
+
 @Composable
 fun BasicTabScreens(
     currentSubscription: SubscriptionStatusViewModel.CurrentSubscription,
     contentResource: ContentResource?,
-    billingViewModel: BillingViewModel,
+    onBuyBasePlans: BuyBasePlansListener,
     modifier: Modifier = Modifier,
 ) {
     val selectedBasicConversionButton =
@@ -74,7 +76,7 @@ fun BasicTabScreens(
                     message = R.string.current_prepaid_basic_subscription_message,
                     currentBasicPlan = Constants.BASIC_PREPAID_PLAN_TAG,
                     selectedButton = selectedEntitlementButtonPrepaid,
-                    billingViewModel = billingViewModel
+                    onBuyBasePlans = onBuyBasePlans
                 )
             } else {
                 LoadingScreen()
@@ -91,9 +93,9 @@ fun BasicTabScreens(
                         )
                     },
                     message = R.string.current_recurring_basic_subscription_message,
-                    currentBasicPlan = Constants.BASIC_MONTHLY_PLAN,
+                    currentBasicPlan = Constants.BASIC_MONTHLY_PLAN_TAG,
                     selectedButton = selectedEntitlementButtonMonthly,
-                    billingViewModel = billingViewModel
+                    onBuyBasePlans = onBuyBasePlans
                 )
             } else {
                 LoadingScreen()
@@ -102,7 +104,7 @@ fun BasicTabScreens(
 
         SubscriptionStatusViewModel.CurrentSubscription.PREMIUM_RENEWABLE -> {
             BasicConversionScreen(
-                billingViewModel = billingViewModel,
+                onBuyBasePlans = onBuyBasePlans,
                 buttons = {
                     BasicDowngradeButtons(
                         selectedBasicConversionButton = selectedBasicConversionButton
@@ -115,7 +117,7 @@ fun BasicTabScreens(
 
         SubscriptionStatusViewModel.CurrentSubscription.PREMIUM_PREPAID -> {
             BasicConversionScreen(
-                billingViewModel = billingViewModel,
+                onBuyBasePlans = onBuyBasePlans,
                 buttons = {
                     BasicDowngradeButtons(
                         selectedBasicConversionButton = selectedBasicConversionButton
@@ -127,14 +129,14 @@ fun BasicTabScreens(
         }
 
         SubscriptionStatusViewModel.CurrentSubscription.NONE -> {
-            BasicBasePlansScreen(billingViewModel = billingViewModel)
+            BasicBasePlansScreen(onBuyBasePlans = onBuyBasePlans)
         }
     }
 }
 
 @Composable
 fun BasicBasePlansScreen(
-    billingViewModel: BillingViewModel,
+    onBuyBasePlans: BuyBasePlansListener,
     modifier: Modifier = Modifier,
 ) {
     val selectedBasicSubscriptionButton =
@@ -159,10 +161,10 @@ fun BasicBasePlansScreen(
     LaunchedEffect(selectedBasicSubscriptionButton.value) {
         when (selectedBasicSubscriptionButton.value) {
             SelectedSubscriptionBasePlan.MONTHLY.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_MONTHLY_PLAN,
-                    upDowngrade = false
+                onBuyBasePlans(
+                    Constants.BASIC_MONTHLY_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    false
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedBasicSubscriptionButton,
@@ -171,10 +173,10 @@ fun BasicBasePlansScreen(
             }
 
             SelectedSubscriptionBasePlan.YEARLY.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_YEARLY_PLAN,
-                    upDowngrade = false
+                onBuyBasePlans(
+                    Constants.BASIC_YEARLY_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    false
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedBasicSubscriptionButton,
@@ -183,10 +185,10 @@ fun BasicBasePlansScreen(
             }
 
             SelectedSubscriptionBasePlan.PREPAID.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_PREPAID_PLAN_TAG,
-                    upDowngrade = false
+                onBuyBasePlans(
+                    Constants.BASIC_PREPAID_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    false
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedBasicSubscriptionButton,
@@ -203,7 +205,7 @@ fun BasicEntitlementScreen(
     @StringRes message: Int,
     currentBasicPlan: String,
     selectedButton: MutableState<Int>,
-    billingViewModel: BillingViewModel,
+    onBuyBasePlans: BuyBasePlansListener,
     buttons: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -225,12 +227,12 @@ fun BasicEntitlementScreen(
 
     LaunchedEffect(key1 = currentBasicPlan, key2 = selectedButton.value) {
         when (currentBasicPlan) {
-            in listOf(Constants.BASIC_MONTHLY_PLAN, Constants.BASIC_YEARLY_PLAN) -> {
+            in listOf(Constants.BASIC_MONTHLY_PLAN_TAG, Constants.BASIC_YEARLY_PLAN_TAG) -> {
                 if (selectedButton.value == SelectedSubscriptionBasePlan.PREPAID.index) {
-                    billingViewModel.buyBasePlans(
-                        product = Constants.BASIC_PRODUCT,
-                        tag = Constants.BASIC_PREPAID_PLAN_TAG,
-                        upDowngrade = true
+                    onBuyBasePlans(
+                        Constants.BASIC_PREPAID_PLAN_TAG,
+                        Constants.BASIC_PRODUCT,
+                        true
                     )
                     resetSelectedButton(
                         selectedIntButton = selectedButton,
@@ -242,10 +244,10 @@ fun BasicEntitlementScreen(
             Constants.BASIC_PREPAID_PLAN_TAG -> {
                 when (selectedButton.value) {
                     SelectedSubscriptionBasePlan.MONTHLY.index -> {
-                        billingViewModel.buyBasePlans(
-                            product = Constants.BASIC_PRODUCT,
-                            tag = Constants.BASIC_MONTHLY_PLAN,
-                            upDowngrade = true
+                        onBuyBasePlans(
+                            Constants.BASIC_MONTHLY_PLAN_TAG,
+                            Constants.BASIC_PRODUCT,
+                            true
                         )
                         resetSelectedButton(
                             selectedIntButton = selectedButton,
@@ -254,10 +256,10 @@ fun BasicEntitlementScreen(
                     }
 
                     SelectedSubscriptionBasePlan.YEARLY.index -> {
-                        billingViewModel.buyBasePlans(
-                            product = Constants.BASIC_PRODUCT,
-                            tag = Constants.BASIC_YEARLY_PLAN,
-                            upDowngrade = false
+                        onBuyBasePlans(
+                            Constants.BASIC_YEARLY_PLAN_TAG,
+                            Constants.BASIC_PRODUCT,
+                            false
                         )
                         resetSelectedButton(
                             selectedIntButton = selectedButton,
@@ -272,7 +274,7 @@ fun BasicEntitlementScreen(
 
 @Composable
 fun BasicConversionScreen(
-    billingViewModel: BillingViewModel,
+    onBuyBasePlans: BuyBasePlansListener,
     selectedButton: MutableState<Int>,
     @StringRes message: Int,
     buttons: @Composable () -> Unit,
@@ -290,10 +292,10 @@ fun BasicConversionScreen(
     LaunchedEffect(selectedButton.value) {
         when (selectedButton.value) {
             SelectedSubscriptionBasePlan.MONTHLY.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_MONTHLY_PLAN,
-                    upDowngrade = true
+                onBuyBasePlans(
+                    Constants.BASIC_MONTHLY_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    true
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedButton,
@@ -302,10 +304,10 @@ fun BasicConversionScreen(
             }
 
             SelectedSubscriptionBasePlan.YEARLY.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_YEARLY_PLAN,
-                    upDowngrade = true
+                onBuyBasePlans(
+                    Constants.BASIC_YEARLY_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    true
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedButton,
@@ -314,10 +316,10 @@ fun BasicConversionScreen(
             }
 
             SelectedSubscriptionBasePlan.PREPAID.index -> {
-                billingViewModel.buyBasePlans(
-                    product = Constants.BASIC_PRODUCT,
-                    tag = Constants.BASIC_PREPAID_PLAN_TAG,
-                    upDowngrade = true
+                onBuyBasePlans(
+                    Constants.BASIC_PREPAID_PLAN_TAG,
+                    Constants.BASIC_PRODUCT,
+                    true
                 )
                 resetSelectedButton(
                     selectedIntButton = selectedButton,

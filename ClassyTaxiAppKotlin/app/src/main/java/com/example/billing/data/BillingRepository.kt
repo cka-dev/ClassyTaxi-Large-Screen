@@ -50,6 +50,8 @@ class BillingRepository private constructor(
         CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
 
+    val isBillingClientReady = billingClientLifecycle.isBillingClientReady
+
     /**
      * True when there are pending network requests.
      */
@@ -79,19 +81,31 @@ class BillingRepository private constructor(
      * [StateFlow] with the basic content.
      * Intended to be collected by ViewModel
      */
-    val basicContent = _basicContent.asStateFlow()
+    val basicContent = _basicContent.stateIn(
+        externalScope,
+        SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        null
+    )
 
     /**
      * [StateFlow] with the premium content.
      * Intended to be collected by ViewModel
      */
-    val premiumContent = _premiumContent.asStateFlow()
+    val premiumContent = _premiumContent.stateIn(
+        externalScope,
+        SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        null
+    )
 
     /**
      * [StateFlow] with the one-time product content.
      * Intended to be collected by ViewModel
      */
-    val otpContent = _otpContent.asStateFlow()
+    val otpContent = _otpContent.stateIn(
+        externalScope,
+        SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        null
+    )
 
     // Set to true when a returned purchases is an auto-renewing basic subscription.
     val hasRenewableBasic: StateFlow<Boolean> =
@@ -99,7 +113,7 @@ class BillingRepository private constructor(
             purchaseList.any { purchase ->
                 purchase.products.contains(Constants.BASIC_PRODUCT) && purchase.isAutoRenewing
             }
-        }.stateIn(externalScope, SharingStarted.WhileSubscribed(), false)
+        }.stateIn(externalScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000), false)
 
     // Set to true when a returned purchase is prepaid basic subscription.
     val hasPrepaidBasic: StateFlow<Boolean> =
@@ -107,7 +121,7 @@ class BillingRepository private constructor(
             purchaseList.any { purchase ->
                 !purchase.isAutoRenewing && purchase.products.contains(Constants.BASIC_PRODUCT)
             }
-        }.stateIn(externalScope, SharingStarted.WhileSubscribed(), false)
+        }.stateIn(externalScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000), false)
 
     // Set to true when a returned purchases is an auto-renewing premium subscription.
     val hasRenewablePremium: StateFlow<Boolean> =
@@ -115,7 +129,7 @@ class BillingRepository private constructor(
             purchaseList.any { purchase ->
                 purchase.products.contains(Constants.PREMIUM_PRODUCT) && purchase.isAutoRenewing
             }
-        }.stateIn(externalScope, SharingStarted.WhileSubscribed(), false)
+        }.stateIn(externalScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000), false)
 
     // Set to true when a returned purchase is prepaid premium subscription.
     val hasPrepaidPremium: StateFlow<Boolean> =
@@ -123,7 +137,7 @@ class BillingRepository private constructor(
             purchaseList.any { purchase ->
                 !purchase.isAutoRenewing && purchase.products.contains(Constants.PREMIUM_PRODUCT)
             }
-        }.stateIn(externalScope, SharingStarted.WhileSubscribed(), false)
+        }.stateIn(externalScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000), false)
 
     // Set to true when a returned purchase is a one-time product purchase.
     val hasOneTimeProduct: StateFlow<Boolean> =
@@ -131,7 +145,7 @@ class BillingRepository private constructor(
             purchaseList.any { purchase ->
                 purchase.products.contains(Constants.ONE_TIME_PRODUCT)
             }
-        }.stateIn(externalScope, SharingStarted.WhileSubscribed(), false)
+        }.stateIn(externalScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000), false)
 
     init {
         // Update content from the remote server.
@@ -731,9 +745,15 @@ class BillingRepository private constructor(
         withContext(externalScope.coroutineContext) {
             localDataSource.deleteLocalUserSubscriptionsData()
             localDataSource.deleteLocalUserOneTimeProductPurchases()
-            _basicContent.emit(null)
-            _premiumContent.emit(null)
         }
+    }
+
+    fun querySubscriptions() {
+        billingClientLifecycle.querySubscriptionPurchases()
+    }
+
+    fun queryOneTimeProductPurchases() {
+        billingClientLifecycle.queryOneTimeProductPurchases()
     }
 
     companion object {

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 /*
  * Copyright 2018 Google LLC. All rights reserved.
  *
@@ -22,7 +24,7 @@ apply plugin: 'com.google.gms.google-services'
 
 
 android {
-    compileSdkVersion androidCompileSdkVersion as Integer
+    compileSdk androidCompileSdkVersion as Integer
     defaultConfig {
         // The applicationId should be set in the project gradle.properties files.
         applicationId androidApplicationId
@@ -77,18 +79,20 @@ android {
         viewBinding true
         dataBinding true
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.2"
     }
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
         freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
     }
+    namespace 'com.example.billing'
 }
 
 dependencies {
@@ -109,6 +113,7 @@ dependencies {
 
     implementation "com.google.android.gms:play-services-auth:$playServicesVersion"
     implementation "com.google.code.gson:gson:$gsonVersion"
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.2'
 
     // Glide image library
     kapt "com.github.bumptech.glide:compiler:$glideVersion"
@@ -192,4 +197,9 @@ dependencies {
     implementation "androidx.navigation:navigation-compose:$nav_version"
 
     implementation "com.github.bumptech.glide:compose:$glideComposeVersion"
+}
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        languageVersion = "1.9"
+    }
 }

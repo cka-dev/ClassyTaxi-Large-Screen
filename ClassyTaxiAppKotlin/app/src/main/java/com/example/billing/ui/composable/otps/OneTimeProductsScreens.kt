@@ -18,7 +18,6 @@
 package com.example.billing.ui.composable.otps
 
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,14 +40,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.billing.R
 import com.example.billing.data.ContentResource
+import com.example.billing.data.otps.OneTimeProductPurchaseStatus
 import com.example.billing.ui.BillingViewModel
 import com.example.billing.ui.OneTimeProductPurchaseStatusViewModel
+import com.example.billing.ui.OneTimeProductUiState
 import com.example.billing.ui.composable.ClassyTaxiImage
 import com.example.billing.ui.composable.ClassyTaxiScreenHeader
 import com.example.billing.ui.composable.LoadingScreen
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KSuspendFunction1
 
 @Composable
 fun OneTimeProductScreens(
@@ -57,15 +61,30 @@ fun OneTimeProductScreens(
     oneTimeProductPurchaseStatusViewModel: OneTimeProductPurchaseStatusViewModel,
     modifier: Modifier = Modifier
 ) {
-    val currentOneTimeProduct by
-    oneTimeProductPurchaseStatusViewModel.currentOneTimeProductPurchase.collectAsState(
-        initial = OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase.NONE
-    )
+    val otpUIState by oneTimeProductPurchaseStatusViewModel.uiState.collectAsStateWithLifecycle()
 
-    val otpContent by oneTimeProductPurchaseStatusViewModel.content.collectAsState(
-        initial =
-        ContentResource("google.com")
-    )
+    var currentOneTimeProduct: OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase =
+        OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase.NONE
+
+    var otpContent: ContentResource? = null
+
+    val currentOneTimeProducts = billingViewModel.oneTimeProductPurchases
+
+    when (otpUIState) {
+        is OneTimeProductUiState.Success -> {
+            currentOneTimeProduct = (otpUIState as OneTimeProductUiState.Success)
+                .currentOneTimeProductPurchase
+            otpContent = (otpUIState as OneTimeProductUiState.Success).content?.url?.let {
+                ContentResource(it) }
+        }
+        is OneTimeProductUiState.Error -> {
+            // Show an error message, or handle the error state appropriately
+        }
+
+        null -> TODO()
+        else -> TODO()
+    }
+
 
     when (currentOneTimeProduct) {
 
@@ -78,7 +97,7 @@ fun OneTimeProductScreens(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     OneTimeProductPurchaseScreen(
-                        billingViewModel = billingViewModel,
+                        billingViewModel::buyOneTimeProduct,
                     )
                 }
             }
@@ -88,22 +107,24 @@ fun OneTimeProductScreens(
             .OTP -> {
             if (otpContent?.url != null) {
                 OneTimeProductConsumptionScreen(
-                    billingViewModel = billingViewModel,
                     otpContent = otpContent!!,
                     onRefresh = {
                         oneTimeProductPurchaseStatusViewModel.manualRefresh()
-                    }
+                    },
+                    onConsume = billingViewModel::consumePurchase,
+                    currentOneTimeProducts = currentOneTimeProducts
                 )
             } else {
                 LoadingScreen()
             }
         }
+        OneTimeProductPurchaseStatusViewModel.CurrentOneTimeProductPurchase.PENDING -> TODO()
     }
 }
 
 @Composable
 fun OneTimeProductPurchaseScreen(
-    billingViewModel: BillingViewModel,
+    onBuyBasePlans: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val purchaseButtonClicked = remember { mutableStateOf(false) }
@@ -126,7 +147,7 @@ fun OneTimeProductPurchaseScreen(
     }
 
     if (purchaseButtonClicked.value) {
-        billingViewModel.buyOneTimeProduct()
+        runBlocking { onBuyBasePlans() }
         purchaseButtonClicked.value = false
     }
 }
@@ -152,12 +173,13 @@ private fun OneTimeProductsPurchaseButtons(
 
 @Composable
 fun OneTimeProductConsumptionScreen(
-    billingViewModel: BillingViewModel,
+    currentOneTimeProducts: StateFlow<List<OneTimeProductPurchaseStatus>>,
     otpContent: ContentResource,
+    onConsume: KSuspendFunction1<String, Unit>,
     onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val currentOneTimeProducts = billingViewModel.oneTimeProductPurchases.collectAsState()
     val consumeCount = remember { mutableStateOf(0) }
     val maxConsumeCount = 1
 
@@ -182,8 +204,14 @@ fun OneTimeProductConsumptionScreen(
                     coroutineScope.launch {
                         consumeCount.value += 1
                         kotlin.runCatching {
-                            currentOneTimeProducts.value.forEach { otp ->
-                                otp.purchaseToken?.let { billingViewModel.consumePurchase(it) }
+                            currentOneTimeProducts.collect { otp ->
+                                otp.forEach { purchase ->
+                                    purchase.purchaseToken?.let {
+                                        onConsume(
+                                            it,
+                                        )
+                                    }
+                                }
                             }
                         }.onSuccess {
                             onRefresh()

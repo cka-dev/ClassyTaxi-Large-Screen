@@ -130,59 +130,59 @@ class TvMainFragment : DetailsSupportFragment() {
         })
 
         // Show or hide a Spinner based on loading state
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                subscriptionsStatusViewModel.loading.collect { isLoading ->
-                    if (isLoading) {
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.main_frame, spinnerFragment)
-                            .commit()
-                        Log.i(TAG, "loading spinner shown")
-                    } else {
-                        parentFragmentManager.beginTransaction()
-                            .remove(spinnerFragment)
-                            .commit()
-                        Log.i(TAG, "loading spinner hidden")
-                    }
-                }
-            }
-        }
+//        lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                subscriptionsStatusViewModel.loading.collect { isLoading ->
+//                    if (isLoading) {
+//                        parentFragmentManager.beginTransaction()
+//                            .replace(R.id.main_frame, spinnerFragment)
+//                            .commit()
+//                        Log.i(TAG, "loading spinner shown")
+//                    } else {
+//                        parentFragmentManager.beginTransaction()
+//                            .remove(spinnerFragment)
+//                            .commit()
+//                        Log.i(TAG, "loading spinner hidden")
+//                    }
+//                }
+//            }
+//        }
 
         // Updates subscription image for Basic plan
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                subscriptionsStatusViewModel.basicContent.collect { content ->
-                    Log.d(TAG, "basicContent onChange()")
-                    content?.url?.let {
-                        // If a premium subscription exists, don't update image with basic plan
-                        if (premiumSubscription == null) {
-                            updateSubscriptionImage(it)
-                        }
-                    }
-                }
-            }
-        }
+//        lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                subscriptionsStatusViewModel.basicContent.collect { content ->
+//                    Log.d(TAG, "basicContent onChange()")
+//                    content?.url?.let {
+//                        // If a premium subscription exists, don't update image with basic plan
+//                        if (premiumSubscription == null) {
+//                            updateSubscriptionImage(it)
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // Updates subscription image for Premium plan
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                subscriptionsStatusViewModel.premiumContent.collect { content ->
-                    content?.url?.let {
-                        updateSubscriptionImage(it)
-                    }
-                }
-            }
-        }
+//        lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                subscriptionsStatusViewModel.premiumContent.collect { content ->
+//                    content?.url?.let {
+//                        updateSubscriptionImage(it)
+//                    }
+//                }
+//            }
+//        }
 
         // Updates subscription details based on list of available subscriptions
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                subscriptionsStatusViewModel.subscriptions.collect {
-                    Log.d(TAG, "subscriptions onChange()")
-                    updateSubscriptionDetails(it)
-                }
-            }
-        }
+//        lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                subscriptionsStatusViewModel.subscriptions.collect {
+//                    Log.d(TAG, "subscriptions onChange()")
+//                    updateSubscriptionDetails(it)
+//                }
+//            }
+//        }
     }
 
     /**

@@ -28,10 +28,10 @@ object Constants {
         const val ONE_TIME_PRODUCT = "otp"
 
         //Tags
-        const val BASIC_MONTHLY_PLAN = "basicmonthly"
-        const val BASIC_YEARLY_PLAN = "basicyearly"
-        const val PREMIUM_MONTHLY_PLAN = "premiummonthly"
-        const val PREMIUM_YEARLY_PLAN = "premiumyearly"
+        const val BASIC_MONTHLY_PLAN_TAG = "basicmonthly"
+        const val BASIC_YEARLY_PLAN_TAG = "basicyearly"
+        const val PREMIUM_MONTHLY_PLAN_TAG = "premiummonthly"
+        const val PREMIUM_YEARLY_PLAN_TAG = "premiumyearly"
         const val BASIC_PREPAID_PLAN_TAG = "prepaidbasic"
         const val PREMIUM_PREPAID_PLAN_TAG = "prepaidpremium"
 

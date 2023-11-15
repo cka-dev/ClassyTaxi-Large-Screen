@@ -21,13 +21,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.android.billingclient.api.Purchase
 import com.example.billing.BillingApp
 import com.example.billing.Constants
+import com.example.billing.data.BillingRepository
 import com.example.billing.gpbl.BillingClientLifecycle
 import com.example.billing.ui.composable.home.ClassyTaxiApp
 import com.firebase.ui.auth.AuthUI
@@ -46,33 +49,51 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
     private lateinit var billingClientLifecycle: BillingClientLifecycle
 
-    private lateinit var authenticationViewModel: FirebaseUserViewModel
     private lateinit var billingViewModel: BillingViewModel
     private lateinit var subscriptionViewModel: SubscriptionStatusViewModel
     private lateinit var oneTimePurchaseViewModel: OneTimeProductPurchaseStatusViewModel
 
-    private val registerResult = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (it.resultCode == RESULT_OK) {
-            Log.d(TAG, "Sign-in SUCCESS!")
-            authenticationViewModel.updateFirebaseUser()
-        } else {
-            Log.d(TAG, "Sign-in FAILED!")
-        }
-    }
+
+
+    private val authenticationViewModel: FirebaseUserViewModel by viewModels()
+    private lateinit var registerResult: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        authenticationViewModel = ViewModelProvider(this)[FirebaseUserViewModel::class.java]
-        billingViewModel = ViewModelProvider(this)[BillingViewModel::class.java]
-        subscriptionViewModel =
-            ViewModelProvider(this)[SubscriptionStatusViewModel::class.java]
-        oneTimePurchaseViewModel =
-            ViewModelProvider(this)[OneTimeProductPurchaseStatusViewModel::class.java]
+        super.onCreate(savedInstanceState)
+
+        val billingRepository = (application as BillingApp).repository
+
+
+
+        oneTimePurchaseViewModel = ViewModelProvider(
+            this,
+            OneTimeProductPurchaseStatusViewModelFactory(billingRepository)
+        )[OneTimeProductPurchaseStatusViewModel::class.java]
+
+        subscriptionViewModel = ViewModelProvider(
+            this,
+            SubscriptionStatusViewModelFactory(billingRepository)
+        )[SubscriptionStatusViewModel::class.java]
+
+        registerResult = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            if (it.resultCode == RESULT_OK) {
+                Log.d(TAG, "Sign-in SUCCESS!")
+                authenticationViewModel.updateFirebaseUser()
+            } else {
+                Log.d(TAG, "Sign-in FAILED!")
+            }
+        }
 
         // Billing APIs are all handled in the this lifecycle observer.
         billingClientLifecycle = (application as BillingApp).billingClientLifecycle
         lifecycle.addObserver(billingClientLifecycle)
+
+        billingViewModel = ViewModelProvider(
+            this,
+            BillingViewModelFactory(billingRepository, billingClientLifecycle)
+        )[BillingViewModel::class.java]
 
         // Launch the billing flow when the user clicks a button to buy something.
         billingViewModel.buyEvent.observe(this) {
@@ -108,30 +129,32 @@ class MainActivity : AppCompatActivity() {
 
         // Update purchases information when user changes.
         authenticationViewModel.userChangeEvent.observe(this) {
-            subscriptionViewModel.userChanged()
+            Log.d(TAG, "user changed for some reason")
+            subscriptionViewModel.userChanged( repository = billingRepository)
             lifecycleScope.launch {
-                registerPurchases(billingClientLifecycle.subscriptionPurchases.value)
-                registerPurchases(billingClientLifecycle.oneTimeProductPurchases.value)
+                registerPurchases(billingClientLifecycle.subscriptionPurchases.value, repository = billingRepository)
+                registerPurchases(billingClientLifecycle.oneTimeProductPurchases.value, repository = billingRepository)
             }
         }
 
-        super.onCreate(savedInstanceState)
         setContent {
             ClassyTaxiApp(
                 billingViewModel = billingViewModel,
                 subscriptionViewModel = subscriptionViewModel,
                 authenticationViewModel = authenticationViewModel,
                 oneTimeProductViewModel = oneTimePurchaseViewModel,
+                repository = billingRepository,
             )
         }
+
     }
 
 
     /**
      * Register Product purchases with the server.
      */
-    private suspend fun registerPurchases(purchaseList: List<Purchase>) {
-        billingViewModel.registerPurchases(purchaseList)
+    private suspend fun registerPurchases(purchaseList: List<Purchase>, repository: BillingRepository) {
+        billingViewModel.registerPurchases(purchaseList, repository = repository)
     }
 
     /**
@@ -150,6 +173,7 @@ class MainActivity : AppCompatActivity() {
                 .build()
         )
     }
+
 
     companion object {
         private const val TAG = "MainActivity"
